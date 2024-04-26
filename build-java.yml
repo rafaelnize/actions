@@ -1,0 +1,568 @@
+
+name: Build netcore6
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release:
+        required: true
+        type: string
+      projeto:
+        required: true
+        type: string
+      server:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      statics:
+        required: true
+        type: string
+env:
+  WEBLOGIC_PPRD_MAQUINA_NAO: ${{ vars.WEBLOGIC_PPRD_MAQUINA_NAO }}
+  WEBLOGIC_PPRD_MAQUINA_NPA: ${{ vars.WEBLOGIC_PPRD_MAQUINA_NPA }}
+  WEBLOGIC_PPRD_MAQUINA_VP: ${{ vars.WEBLOGIC_PPRD_MAQUINA_VP }}
+  WEBLOGIC_PPRD_MAQUINA_WORKLIST: ${{ vars.WEBLOGIC_PPRD_MAQUINA_WORKLIST }}
+  WEBLOGIC_MAQUINA_JSF02: ${{ vars.WEBLOGIC_MAQUINA_JSF02 }}
+  WEBLOGIC_MAQUINA_DR: ${{ vars.WEBLOGIC_MAQUINA_DR }}
+
+jobs:
+  pipeline-WebLogic:
+    runs-on: homolog
+    if: ${{ github.event.inputs.server == 'WebLogic' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/var
+        name: action var
+        env:      
+          environment: ${{ github.event.inputs.environment }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/java-variables
+        name: action java-variables
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/java-build
+        name: action java-build
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/unittest
+        name: action java-unittest
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+          
+      # - uses: ./templates-pipelines-actions/.github/workflows/actions/java/sonarqube
+      #   name: action java-sonarqube
+      #   env:      
+      #     release: ${{ github.event.inputs.release }}
+      #     projeto: ${{ github.event.inputs.projeto }}
+      #     server: ${{ github.event.inputs.server }}
+      #     environment: ${{ github.event.inputs.environment }}
+      #     statics: ${{ github.event.inputs.statics }}
+      # ##############################################################
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/test-java
+        name: action java-test-java
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/rename
+        name: action java-rename
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/copyfile
+        name: action java-copyfile
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+          
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/deploy
+        name: action java-deploy
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/artifacts
+        name: action artifacts
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+  pipeline-Container-dev:
+    runs-on: homolog
+    if: |
+      github.event.inputs.server == 'Container' &&
+      github.ref == 'refs/heads/develop' &&
+      github.event.inputs.environment == 'dev'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/var
+        name: action var
+        env:      
+          environment: ${{ github.event.inputs.environment }}
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/container/java/variables-java-container
+        name: action variables-java-container
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/container/java/project-name-container
+        name: action project-name-container
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/container/java/build-java-container
+        name: action build-java-container
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/java/unittest
+        name: action java-unittest
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+      # - uses: ./templates-pipelines-actions/.github/workflows/actions/java/sonarqube
+      #   name: action java-sonarqube
+      #   env:      
+      #     release: ${{ github.event.inputs.release }}
+      #     projeto: ${{ github.event.inputs.projeto }}
+      #     server: ${{ github.event.inputs.server }}
+      #     environment: ${{ github.event.inputs.environment }}
+      #     statics: ${{ github.event.inputs.statics }}
+      # ##############################################################
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/docker/dev
+        name: action java-unittest
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/openshift
+        name: action openshift
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: dev
+          namespace: ${{ github.event.inputs.namespace }}
+
+  pipeline-Container-qa:
+    needs: pipeline-Container-dev
+    runs-on: homolog
+    if: |
+      github.event.inputs.server == 'Container' &&
+      github.ref == 'refs/heads/develop' &&
+      github.event.inputs.environment == 'qa'
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/docker/qa
+        name: action docker
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: ${{ github.event.inputs.environment }}
+          namespace: ${{ github.event.inputs.namespace }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/openshift
+        name: action openshift
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: qa
+          namespace: ${{ github.event.inputs.namespace }}
+
+  pipeline-Container-pprd:
+    runs-on: homolog
+    needs: pipeline-Container-qa
+    if: |
+      github.event.inputs.server == 'Container' &&
+      github.ref == 'refs/heads/develop' &&
+      github.event.inputs.environment == 'pprd'
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/docker/pprd
+        name: action docker
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: ${{ github.event.inputs.environment }}
+          namespace: ${{ github.event.inputs.namespace }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/openshift
+        name: action openshift
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: pprd
+          namespace: ${{ github.event.inputs.namespace }}
+  
+  release-Container-prd:
+    needs: pipeline-Container-pprd
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'Container' &&
+      github.ref == 'refs/heads/release' 
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+          
+      # - name: servicenow   
+      #   uses: ./templates-pipelines-actions/.github/workflows/actions/servicenow
+      #   env:      
+      #     commentbody: ${{ github.event.comment.body }}
+      #     review: ${{ github.event.review.body }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/docker/prd
+        name: action docker
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: prd
+          namespace: ${{ github.event.inputs.namespace }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/actions/openshift
+        name: action openshift
+        env:      
+          solution: ${{ github.event.inputs.solution }}
+          environment: prd
+          namespace: ${{ github.event.inputs.namespace }}
+
+  release-WebLogic-statics-pprd:
+    needs: pipeline-WebLogic
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' &&
+      github.event.inputs.statics  == 'true'
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static
+        name: download artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static-pprd
+        name: releases artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+  
+  release-WebLogic-statics-01:
+    needs: release-WebLogic-statics-pprd
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' &&
+      github.event.inputs.statics  == 'true'
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static
+        name: download artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static-prd-01
+        name: releases artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+  
+  release-WebLogic-statics-02:
+    needs: release-WebLogic-statics-pprd
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' &&
+      github.event.inputs.statics  == 'true'
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static
+        name: download artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/static-prd-02
+        name: releases artifacts statics
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+       
+  release-WebLogic-pprd:
+    needs: pipeline-WebLogic
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' &&
+      github.event.inputs.environment == 'pprd'
+    runs-on: TPS-LINUX-QA-HOM
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+          
+      # - name: servicenow   
+      #   uses: ./templates-pipelines-actions/.github/workflows/actions/servicenow
+      #   env:      
+      #     commentbody: ${{ github.event.comment.body }}
+      #     review: ${{ github.event.review.body }}
+
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/artifacts
+        name: download artifacts
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/weblogic-pprd
+        name: releases weblogic-pprd
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+  release-WebLogic-JSF02:
+    needs: release-WebLogic-pprd
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' 
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/artifacts
+        name: download artifacts
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/JSF02
+        name: releases weblogic-JSF02
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+
+
+  release-WebLogic-dr:
+    needs: release-WebLogic-JSF02
+    environment: deploy_approvers
+    if: |
+      github.event.inputs.server == 'WebLogic' 
+    runs-on: prod
+    steps:
+      - name: Check out repository templates-pipelines-actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'SemParar-Alm/templates-pipelines-actions'
+          ref: 'refs/heads/master'
+          token: '${{ secrets.GH_TOKEN }}'
+          path: 'templates-pipelines-actions/'
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/artifacts
+        name: download artifacts
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+      - uses: ./templates-pipelines-actions/.github/workflows/releases/java/weblogic/dr
+        name: releases weblogic-dr
+        env:      
+          release: ${{ github.event.inputs.release }}
+          projeto: ${{ github.event.inputs.projeto }}
+          server: ${{ github.event.inputs.server }}
+          environment: ${{ github.event.inputs.environment }}
+          statics: ${{ github.event.inputs.statics }}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
